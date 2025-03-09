@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  setup:
+    image: alpine:latest
+    volumes:
+      - .:/workspace
+    command: sh -c "apk add --no-cache git && sh /workspace/clone_repos.sh"
+    entrypoint: [ "sh", "-c", "apk add --no-cache git && sh /workspace/clone_repos.sh" ]
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - portfolio
+      - forum
+      - ascii-art-web
+    networks:
+      - webnet
+
+  portfolio:
+    build: ./portfolio
+    container_name: portfolio
+    ports:
+      - "3000:3000"
+    networks:
+      - webnet
+    depends_on:
+      - setup
+
+  forum:
+    build: ./projects/forum
+    container_name: forum
+    ports:
+      - "8080:8080"
+    depends_on:
+      - setup
+    networks:
+      - webnet
+
+  ascii-art-web:
+    build: ./projects/ascii-art-web
+    container_name: ascii-art-web
+    ports:
+      - "8081:8080"
+    depends_on:
+      - setup
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge
